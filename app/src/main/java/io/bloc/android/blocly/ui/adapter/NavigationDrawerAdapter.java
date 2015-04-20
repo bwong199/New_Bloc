@@ -63,7 +63,7 @@ public class NavigationDrawerAdapter extends RecyclerView.Adapter<NavigationDraw
 
         }
 
-        void update(int position, RSSFeed rssFeed){
+        void update(int position, RssFeed rssFeed){
             boolean shouldShowTopPadding = position == NavigationOption.NAVIGATION_OPTION_INBOX.ordinal()
                     || position == NavigationOption.values().length;
             topPadding.setVisibility(shouldShowTopPadding ? View.VISIBLE : View.GONE);
@@ -72,7 +72,7 @@ public class NavigationDrawerAdapter extends RecyclerView.Adapter<NavigationDraw
                     || position == getItemCount() -1;
             bottomPadding.setVisibility(shouldShowBottomPadding ? View.VISIBLE :View.GONE);
 
-            divider.setVisibility(position == NavigationOption.NAVIGATION_OPTION_ARCHIVED.ordinal())
+            divider.setVisibility(position == NavigationOption.NAVIGATION_OPTION_ARCHIVED.ordinal()
                 ? View.VISIBLE : View.GONE);
 
             if (position < NavigationOption.values().length) {
@@ -87,7 +87,6 @@ public class NavigationDrawerAdapter extends RecyclerView.Adapter<NavigationDraw
 
             }
 
-        }
 
         /*
          * OnClickListener

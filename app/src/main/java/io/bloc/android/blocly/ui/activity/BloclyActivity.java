@@ -26,7 +26,7 @@ public class BloclyActivity extends ActionBarActivity {
         private NavigationDrawerAdapter navigationDrawerAdapter;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState){
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_blocly);
 
@@ -53,7 +53,7 @@ public class BloclyActivity extends ActionBarActivity {
         navigationRecyclerView.setItemAnimator(new DefaultItemAnimator());
         navigationRecyclerView.setAdapter(navigationDrawerAdapter);
 
-
+    }
         protected void onPostCreate(Bundle savedInstanceState){
             super.onPostCreate(savedInstanceState);
             drawerToggle.syncState();
