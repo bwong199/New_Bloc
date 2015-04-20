@@ -55,7 +55,7 @@ implements
         setSupportActionBar(toolbar);
 
         itemAdapter = new ItemAdapter();
-        itemAdapter.SetDataSource(this);
+        itemAdapter.setDataSource(this);
         itemAdapter.setDelegate(this);
 
         recyclerView = (RecyclerView) findViewById(R.id.rv_activity_blocly);
@@ -149,7 +149,7 @@ implements
                     item.setEnabled(true);
                     Drawable icon = item.getIcon();
                     if (icon != null){
-                        icon.setAlpha(int) ((1f - slideOffset) * 255));
+                        icon.setAlpha((int) ((1f - slideOffset) * 255));
                     }
                 }
 
@@ -212,7 +212,7 @@ implements
 
 
         @Override
-        public boolean onCreateOptionMenu (Menu menu){
+        public boolean onCreateOptionsMenu (Menu menu){
 
 
 
