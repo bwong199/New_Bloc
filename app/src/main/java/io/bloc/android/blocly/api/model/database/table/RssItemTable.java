@@ -37,7 +37,7 @@ public class RssItemTable extends Table {
 
                 + COLUMN_FAVORITE + " INTEGER DEFAULT 0,"
                 + COLUMN_ARCHIVED + " INTEGER DEFAULT 0)";
-        
+
 
     }
 
