@@ -46,7 +46,7 @@ public class RssFeedTable extends Table {
     }
 
     public static String getFeedURL (Cursor cursor){
-        return getString (cursor, COLUMN_FEED_URL)
+        return getString (cursor, COLUMN_FEED_URL);
     }
 
     public static String getTitle (Cursor cursor){
