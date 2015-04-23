@@ -77,12 +77,97 @@ public class DataSource {
         }
     }
 
+    public void fetchFeedWithId(final long rowId, final Callback<RssFeed> callback) {
+        final Handler callbackThreadHandler = new Handler();
+        submitTask(new Runnable() {
+            @Override
+            public void run() {
+                Cursor cursor = rssFeedTable.fetchRow(databaseOpenHelper.getReadableDatabase(), rowId);
+                if (cursor.moveToFirst()) {
+                    final RssFeed rssFeed = feedFromCursor(cursor);
+                    cursor.close();
+                    callbackThreadHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onSuccess(rssFeed);
+                        }
+                    });
+                } else {
+                    callbackThreadHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onError("RSS feed not found for row Id (" + rowId + ")");
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    public void fetchAllFeeds(final Callback<List<RssFeed>> callback) {
+        final Handler callbackThreadHandler = new Handler();
+        submitTask(new Runnable() {
+            @Override
+            public void run() {
+                final List<RssFeed> resultFeeds = new ArrayList<RssFeed>();
+                Cursor cursor = RssFeedTable.fetchAllFeeds(databaseOpenHelper.getReadableDatabase());
+                if (cursor.moveToFirst()) {
+                    do {
+                        resultFeeds.add(feedFromCursor(cursor));
+                    } while (cursor.moveToNext());
+                    cursor.close();
+                }
+                callbackThreadHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onSuccess(resultFeeds);
+                    }
+                });
+            }
+        });
+    }
+
+    public void fetchNewItemsForFeed(final RssFeed rssFeed, final Callback<List<RssItem>> callback) {
+        final Handler callbackThreadHandler = new Handler();
+        submitTask(new Runnable() {
+            @Override
+            public void run() {
+                GetFeedsNetworkRequest getFeedsNetworkRequest = new GetFeedsNetworkRequest(rssFeed.getFeedUrl());
+                final List<RssItem> newItems = new ArrayList<RssItem>();
+                List<FeedResponse> feedResponses = getFeedsNetworkRequest.performRequest();
+                if (checkForError(getFeedsNetworkRequest, callbackThreadHandler, callback)) {
+                    return;
+                }
+                FeedResponse feedResponse = feedResponses.get(0);
+                for (ItemResponse itemResponse : feedResponse.channelItems) {
+// #3
+                    if (RssItemTable.hasItem(databaseOpenHelper.getReadableDatabase(), itemResponse.itemGUID)) {
+                        continue;
+                    }
+                    long newItemRowId = insertResponseToDatabase(rssFeed.getRowId(), itemResponse);
+                    Cursor newItemCursor = rssItemTable.fetchRow(databaseOpenHelper.getReadableDatabase(), newItemRowId);
+                    newItemCursor.moveToFirst();
+                    newItems.add(itemFromCursor(newItemCursor));
+                    newItemCursor.close();
+                }
+                callbackThreadHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onSuccess(newItems);
+                    }
+                });
+            }
+        });
+    }
+
+
+
     public void fetchNewFeed (final String feedURL, final Callback<RssFeed> callback){
 
         final Handler callbackThreadhandler = new Handler();
 
 
-    submitTask(new Runnable() {
+        submitTask(new Runnable() {
         @Override
         public void run() {
 
@@ -118,8 +203,7 @@ public class DataSource {
                 .insert(databaseOpenHelper.getWritableDatabase());
 
 
-        for(
-        ItemResponse itemResponse
+        for (ItemResponse itemResponse
         :newFeedResponse.channelItems)
 
         {
