@@ -1,6 +1,7 @@
 package io.bloc.android.blocly.api;
 
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -49,7 +50,53 @@ public class DataSource {
 
         if (BuildConfig.DEBUG && true) {
             BloclyApplication.getSharedInstance().deleteDatabase("blocly_db");
+            SQLiteDatabase writableDatabase = databaseOpenHelper.getWritableDatabase();
+            new RssFeedTable.Builder()
+                    .setTitle("AndroidCentral")
+                    .setDescription("AndroidCentral - Android News, Tips, and stuff!")
+                    .setSiteURL("http://www.androidcentral.com")
+                    .setFeedURL("http://feeds.feedburner.com/androidcentral?format=xml")
+                    .insert(writableDatabase);
+            new RssFeedTable.Builder()
+                    .setTitle("IGN")
+                    .setDescription("IGN All")
+                    .setSiteURL("http://www.ign.com")
+                    .setFeedURL("http://feeds.ign.com/ign/all?format=xml")
+                    .insert(writableDatabase);
+            new RssFeedTable.Builder()
+                    .setTitle("Kotaku")
+                    .setDescription("Game news, reviews, and awesomeness")
+                    .setSiteURL("http://kotaku.com")
+                    .setFeedURL("http://feeds.gawker.com/kotaku/full#_ga=1.41426146.1734638996.1420673722")
+                    .insert(writableDatabase);
         }
+    }
+
+    public void fetchRSSItemWithId(final long rowId, final Callback<RssItem> callback) {
+        final Handler callbackThreadHandler = new Handler();
+        submitTask(new Runnable() {
+            @Override
+            public void run() {
+                Cursor cursor = rssItemTable.fetchRow(databaseOpenHelper.getReadableDatabase(), rowId);
+                if (cursor.moveToFirst()) {
+                    final RssItem rssItem = itemFromCursor(cursor);
+                    cursor.close();
+                    callbackThreadHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onSuccess(rssItem);
+                        }
+                    });
+                } else {
+                    callbackThreadHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onError("RSS item not found for row Id (" + rowId + ")");
+                        }
+                    });
+                }
+            }
+        });
     }
 
     public void fetchFeedWithId(final long rowId, final Callback<RssFeed> callback) {
@@ -166,25 +213,7 @@ public class DataSource {
             GetFeedsNetworkRequest getFeedsNetworkRequest = new GetFeedsNetworkRequest(feedURL);
             List<FeedResponse> feedResponses = getFeedsNetworkRequest.performRequest();
 
-            if (getFeedsNetworkRequest.getErrorCode() != 0) {
-                final String errorMessage;
-                if (getFeedsNetworkRequest.getErrorCode() == NetworkRequest.ERROR_IO) {
-                    errorMessage = "Network error";
-                }
-            } else if (getFeedsNetworkRequest.getErrorCode() == NetworkRequest.ERROR_MALFORMED_URL) {
-                errorMessage = "Malformed URL error";
-            } else if (getFeedsNetworkRequest.getErrorCode() == GetFeedsNetworkRequest.ERROR_PARSING) {
-                errorMessage = "Error parsing feed";
-            } else {
-                errorMessage = "Error unknown";
-            }
-
-            callbackThreadHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    callback.onError(errorMessage);
-                }
-            });
+            if (checkForError(getFeedsNetworkRequest, callbackThreadHandler, callback)) {
             return;
         }
 
@@ -223,6 +252,9 @@ public class DataSource {
                     .insert(databaseOpenHelper.getWritableDatabase());
 
         }
+            for (ItemResponse itemResponse : newFeedResponse.channelItems) {
+                insertResponseToDatabase(newFeedId, itemResponse);
+            }
 
         Cursor newFeedCursor = rssFeedTable.fetchRow(databaseOpenHelper.getReadableDatabase(), newFeedId);
         newFeedCursor.moveToFirst();
@@ -286,6 +318,49 @@ public class DataSource {
 
         executorService.submit(task);
 
+    }
+
+    boolean checkForError(GetFeedsNetworkRequest getFeedsNetworkRequest, Handler callbackThreadHandler, final Callback<?> callback) {
+        if (getFeedsNetworkRequest.getErrorCode() != 0) {
+            final String errorMessage;
+            if (getFeedsNetworkRequest.getErrorCode() == NetworkRequest.ERROR_IO) {
+                errorMessage = "Network error";
+            } else if (getFeedsNetworkRequest.getErrorCode() == NetworkRequest.ERROR_MALFORMED_URL) {
+                errorMessage = "Malformed URL error";
+            } else if (getFeedsNetworkRequest.getErrorCode() == GetFeedsNetworkRequest.ERROR_PARSING) {
+                errorMessage = "Error parsing feed";
+            } else {
+                errorMessage = "Error unknown";
+            }
+            callbackThreadHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    callback.onError(errorMessage);
+                }
+            });
+        }
+        return getFeedsNetworkRequest.getErrorCode() != 0;
+    }
+
+    // #2
+    long insertResponseToDatabase(long feedId, ItemResponse itemResponse) {
+        long itemPubDate = System.currentTimeMillis();
+        DateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy kk:mm:ss z", Locale.ENGLISH);
+        try {
+            itemPubDate = dateFormat.parse(itemResponse.itemPubDate).getTime();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return new RssItemTable.Builder()
+                .setTitle(itemResponse.itemTitle)
+                .setDescription(itemResponse.itemDescription)
+                .setEnclosure(itemResponse.itemEnclosureURL)
+                .setMIMEType(itemResponse.itemEnclosureMIMEType)
+                .setLink(itemResponse.itemURL)
+                .setGUID(itemResponse.itemGUID)
+                .setPubDate(itemPubDate)
+                .setRSSFeed(feedId)
+                .insert(databaseOpenHelper.getWritableDatabase());
     }
 
  }

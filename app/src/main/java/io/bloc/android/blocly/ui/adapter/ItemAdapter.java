@@ -161,13 +161,11 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
             super(itemView);
 
             title = (TextView) itemView.findViewById(R.id.tv_rss_item_title);
-            feed = (TextView) itemView.findViewById(R.id.tv_rss_item_feed_title);
             content = (TextView) itemView.findViewById(R.id.tv_rss_item_content);
 
 
             // Attempt to recover phone Views
-
-            if (itemView.findViewById(R.id.tv_rss_item_feed_title) != null){
+            if (itemView.findViewById(R.id.tv_rss_item_feed_title) != null) {
                 feed = (TextView) itemView.findViewById(R.id.tv_rss_item_feed_title);
                 headerWrapper = itemView.findViewById(R.id.fl_rss_item_image_header);
                 headerImage = (ImageView) headerWrapper.findViewById(R.id.iv_rss_item_image);
@@ -180,25 +178,22 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
                 archiveCheckbox.setOnCheckedChangeListener(this);
                 favoriteCheckbox.setOnCheckedChangeListener(this);
             } else {
-            } else {
                 // Recover Tablet Views
                 onTablet = true;
                 callout = (TextView) itemView.findViewById(R.id.tv_rss_item_callout);
-
-                if (Build.VERSION.SDK_INT >=21){
+// #3
+                if (Build.VERSION.SDK_INT >= 21) {
                     callout.setOutlineProvider(new ViewOutlineProvider() {
                         @Override
                         public void getOutline(View view, Outline outline) {
                             outline.setOval(0, 0, view.getWidth(), view.getHeight());
                         }
                     });
-
                     callout.setClipToOutline(true);
                 }
-
             }
-
             itemView.setOnClickListener(this);
+
 
         }
 
@@ -207,15 +202,14 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
 
             title.setText(rssItem.getTitle());
             content.setText(rssItem.getDescription());
-            if (onTablet){
+            if (onTablet) {
+// #4
                 callout.setText("" + Character.toUpperCase(rssFeed.getTitle().charAt(0)));
                 Integer color = rssFeedToColor.get(rssFeed.getRowId());
-                if (color == null){
+                if (color == null) {
                     color = UIUtils.generateRandomColor(itemView.getResources().getColor(android.R.color.white));
-                    rssFeedToColor.put(rssFeed.getRowid(), color);
-
+                    rssFeedToColor.put(rssFeed.getRowId(), color);
                 }
-
                 callout.setBackgroundColor(color);
                 return;
             }
