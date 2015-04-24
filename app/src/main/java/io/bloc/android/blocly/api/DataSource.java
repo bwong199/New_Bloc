@@ -1,6 +1,8 @@
 package io.bloc.android.blocly.api;
 
+import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -38,15 +40,15 @@ public class DataSource {
     private ExecutorService executorService;
 
 
-    public DataSource() {
+    public DataSource(Context context) {
         rssFeedTable = new RssFeedTable();
         rssItemTable = new RssItemTable();
 
         executorService = Executors.newSingleThreadExecutor();
-        databaseOpenHelper = new DatabaseOpenHelper(BloclyApplication.getSharedInstance(),
+        databaseOpenHelper = new DatabaseOpenHelper(context,
                 rssFeedTable, rssItemTable);
         if (BuildConfig.DEBUG && true) {
-            BloclyApplication.getSharedInstance().deleteDatabase("blocly_db");
+            context.deleteDatabase("blocly_db");
             SQLiteDatabase writableDatabase = databaseOpenHelper.getWritableDatabase();
             new RssFeedTable.Builder()
                     .setTitle("AndroidCentral")
@@ -159,7 +161,7 @@ public class DataSource {
                     return;
                 }
                 FeedResponse feedResponse = feedResponses.get(0);
-                for (GetFeedsNetworkRequest.ItemResponse itemResponse : feedResponse.channelItems) {
+                for (ItemResponse itemResponse : feedResponse.channelItems) {
 
                     if (RssItemTable.hasItem(databaseOpenHelper.getReadableDatabase(), itemResponse.itemGUID)) {
                         continue;
@@ -313,7 +315,7 @@ public class DataSource {
         }
 
 
-        long insertResponseToDatabase(long feedId, GetFeedsNetworkRequest.ItemResponse itemResponse) {
+        long insertResponseToDatabase(long feedId, ItemResponse itemResponse) {
             long itemPubDate = System.currentTimeMillis();
             DateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy kk:mm:ss z", Locale.ENGLISH);
             try {

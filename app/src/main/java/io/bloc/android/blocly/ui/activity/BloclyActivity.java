@@ -6,6 +6,7 @@ import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Debug;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -22,10 +23,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.bloc.android.blocly.BloclyApplication;
+import io.bloc.android.blocly.R;
 import io.bloc.android.blocly.api.DataSource;
 import io.bloc.android.blocly.api.model.RssFeed;
 import io.bloc.android.blocly.api.model.RssItem;
 import io.bloc.android.blocly.ui.adapter.NavigationDrawerAdapter;
+import io.bloc.android.blocly.ui.fragment.Delegate;
 import io.bloc.android.blocly.ui.fragment.RssItemDetailFragment;
 import io.bloc.android.blocly.ui.fragment.RssItemListFragment;
 
@@ -37,7 +40,7 @@ public class BloclyActivity extends ActionBarActivity implements
 
 
         NavigationDrawerAdapter.NavigationDrawerAdapterDataSource,
-        RssItemListFragment.Delegate {
+        Delegate {
 
 
     private ActionBarDrawerToggle drawerToggle;
@@ -53,6 +56,7 @@ public class BloclyActivity extends ActionBarActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Debug.startMethodTracing("BloclyActivity");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_blocly);
 
@@ -296,6 +300,12 @@ public class BloclyActivity extends ActionBarActivity implements
             animateShareItem(expandedItem != null);
             return super.onCreateOptionsMenu(menu);
         }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Debug.stopMethodTracing();
+    }
 
 
         /*

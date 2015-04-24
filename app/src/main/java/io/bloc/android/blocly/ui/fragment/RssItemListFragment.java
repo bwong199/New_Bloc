@@ -50,7 +50,7 @@ public class RssItemListFragment extends Fragment implements ItemAdapter.DataSou
 
 
     private SwipeRefreshLayout swipeRefreshLayout;
-    private RecyclerView recyclerView;
+    private thankRecyclerView recyclerView;
     private ItemAdapter itemAdapter;
 
     private RssFeed currentFeed;
